@@ -1,0 +1,1416 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>이메일 서명 생성기</title>
+  <style>
+    :root {
+      --page: #f4f6f8;
+      --panel: #ffffff;
+      --ink: #071326;
+      --muted: #6f7d91;
+      --line: #dfe5ee;
+      --naver: #03c75a;
+      --accent: #111827;
+      --soft: #eaf4ff;
+      --soft-line: #cfe2ff;
+      --shadow: 0 12px 34px rgba(15, 23, 42, .09);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--page);
+      color: var(--ink);
+      font-family: Pretendard, "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", "맑은 고딕", Arial, sans-serif;
+      letter-spacing: 0;
+    }
+
+    button, input, textarea, select {
+      font: inherit;
+    }
+
+    .app {
+      width: min(1080px, calc(100vw - 32px));
+      margin: 22px auto 40px;
+    }
+
+    .title {
+      margin-bottom: 30px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 28px;
+      line-height: 1.2;
+      font-weight: 800;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: #64748b;
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(360px, 472px) minmax(420px, 1fr);
+      gap: 32px;
+      align-items: start;
+    }
+
+    .workspace > * {
+      min-width: 0;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .tabs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      border-bottom: 1px solid #edf1f5;
+      background: #fbfcfe;
+    }
+
+    .tab {
+      height: 45px;
+      border: 0;
+      border-bottom: 2px solid transparent;
+      background: transparent;
+      color: #8793a7;
+      cursor: pointer;
+    }
+
+    .tab.active {
+      color: var(--ink);
+      border-bottom-color: var(--ink);
+      font-weight: 700;
+    }
+
+    .form-page {
+      display: none;
+      padding: 24px 24px 30px;
+    }
+
+    .form-page.active { display: block; }
+
+    .field {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    label {
+      color: #64748b;
+      font-size: 13px;
+    }
+
+    .field-help {
+      color: #64748b;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    input, textarea, select {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      color: #0f172a;
+      background: #fff;
+      outline: none;
+      transition: border-color .15s, box-shadow .15s;
+    }
+
+    input, select {
+      height: 38px;
+      padding: 0 12px;
+    }
+
+    textarea {
+      min-height: 78px;
+      resize: vertical;
+      padding: 10px 12px;
+      line-height: 1.5;
+    }
+
+    input:focus, textarea:focus, select:focus {
+      border-color: #89a7d7;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, .1);
+    }
+
+    .two {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .swatches {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .swatch {
+      position: relative;
+      height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      cursor: pointer;
+      background: var(--swatch);
+    }
+
+    .swatch-code {
+      position: absolute;
+      top: 6px;
+      left: 6px;
+      padding: 2px 5px;
+      border-radius: 5px;
+      background: rgba(255, 255, 255, .78);
+      color: #181e3c;
+      font-size: 10px;
+      font-weight: 800;
+      line-height: 1;
+      pointer-events: none;
+    }
+
+    .swatch input {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .swatch:has(input:checked) {
+      outline: 3px solid rgba(17, 24, 39, .2);
+      outline-offset: 2px;
+    }
+
+    .upload-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: end;
+    }
+
+    .clear-btn {
+      width: 42px;
+      height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fff;
+      cursor: pointer;
+      color: #566174;
+    }
+
+    .form-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .action-btn {
+      height: 40px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fff;
+      color: #111827;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .action-btn.primary {
+      border-color: #181e3c;
+      background: #181e3c;
+      color: #fff;
+    }
+
+    .preview-tabs {
+      display: inline-grid;
+      grid-template-columns: 92px 110px;
+      gap: 8px;
+      padding: 4px;
+      margin-bottom: 18px;
+      border-radius: 10px;
+      background: #eef2f7;
+    }
+
+    .view-tab {
+      height: 34px;
+      border: 0;
+      border-radius: 8px;
+      background: transparent;
+      color: #64748b;
+      cursor: pointer;
+    }
+
+    .view-tab.active {
+      background: #fff;
+      color: var(--ink);
+      box-shadow: 0 2px 7px rgba(15, 23, 42, .14);
+      font-weight: 700;
+    }
+
+    .preview-panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .hint {
+      padding: 22px 24px 14px;
+      color: #8a94a6;
+      font-size: 12px;
+    }
+
+    .preview-scroll {
+      overflow: auto;
+      padding: 0 24px 28px;
+    }
+
+    .signature-shell {
+      width: 720px;
+      min-height: 203px;
+      background: #fff;
+      box-shadow: var(--shadow);
+      border: 1px solid #e5e7eb;
+      overflow: hidden;
+    }
+
+    .copy-btn {
+      width: 100%;
+      height: 44px;
+      margin: 16px 0;
+      border: 0;
+      border-radius: 12px;
+      background: #101827;
+      color: #fff;
+      cursor: pointer;
+      font-weight: 800;
+    }
+
+    .copy-btn:active { transform: translateY(1px); }
+
+    .guide {
+      padding: 16px 18px;
+      border: 1px solid var(--soft-line);
+      border-radius: 14px;
+      background: var(--soft);
+      color: #0055ff;
+      font-size: 13px;
+      line-height: 1.65;
+    }
+
+    .guide strong {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .code-box {
+      display: none;
+      width: 100%;
+      min-height: 324px;
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #0b1220;
+      color: #c7d2fe;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 12px;
+      line-height: 1.55;
+      white-space: pre;
+      overflow: auto;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 28px;
+      translate: -50% 20px;
+      max-width: calc(100vw - 32px);
+      padding: 14px 18px;
+      border-radius: 12px;
+      background: rgba(17, 24, 39, .94);
+      color: #fff;
+      font-size: 13px;
+      box-shadow: 0 14px 32px rgba(0, 0, 0, .24);
+      opacity: 0;
+      pointer-events: none;
+      transition: .2s ease;
+    }
+
+    .toast.show {
+      opacity: 1;
+      translate: -50% 0;
+    }
+
+    @media (max-width: 940px) {
+      .workspace {
+        grid-template-columns: 1fr;
+      }
+
+      .signature-shell {
+        width: 720px;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .app {
+        width: min(100% - 20px, 1080px);
+        margin-top: 14px;
+      }
+
+      h1 { font-size: 23px; }
+      .form-page { padding: 18px 16px 22px; }
+      .two { grid-template-columns: 1fr; }
+      .preview-scroll { padding-inline: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="title">
+      <h1>이메일 서명 생성기</h1>
+      <p class="subtitle">서명을 편집한 후 HTML을 복사하여 사용하는 메일 서비스의 서명 설정에 붙여넣기 하세요.</p>
+    </header>
+
+    <section class="workspace" aria-label="서명 생성기">
+      <div class="panel">
+        <nav class="tabs" aria-label="입력 항목">
+          <button class="tab active" type="button" data-page="basic">기본 정보</button>
+          <button class="tab" type="button" data-page="design">디자인</button>
+          <button class="tab" type="button" data-page="images">이미지</button>
+        </nav>
+
+        <form id="signatureForm">
+          <div class="form-page active" data-page-panel="basic">
+            <div class="field">
+              <label for="signatureLang">서명 언어</label>
+              <select id="signatureLang" name="signatureLang">
+                <option value="ko" selected>한국어</option>
+                <option value="en">English</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="staffPreset">저장된 직원 정보</label>
+              <select id="staffPreset">
+                <option value="">직원 선택</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="nameKo">이름 (한글)</label>
+              <input id="nameKo" name="nameKo" value="강한구">
+            </div>
+            <div class="field">
+              <label for="position">직함</label>
+              <input id="position" name="position" value="대표" list="positionKoOptions">
+              <datalist id="positionKoOptions">
+                <option value="사원"></option>
+                <option value="주임"></option>
+                <option value="대리"></option>
+                <option value="과장"></option>
+                <option value="차장"></option>
+                <option value="팀장"></option>
+                <option value="부장"></option>
+                <option value="본부장"></option>
+                <option value="연구소장"></option>
+                <option value="이사"></option>
+                <option value="사장"></option>
+                <option value="대표"></option>
+              </datalist>
+            </div>
+            <div class="field">
+              <label for="positionEn">직함 (영문)</label>
+              <input id="positionEn" name="positionEn" value="CEO" list="positionEnOptions">
+              <datalist id="positionEnOptions">
+                <option value="Staff"></option>
+                <option value="Supervisor"></option>
+                <option value="Assistant Manager"></option>
+                <option value="Manager"></option>
+                <option value="Senior Manager"></option>
+                <option value="Team Leader"></option>
+                <option value="General Manager"></option>
+                <option value="R&D Director"></option>
+                <option value="Director"></option>
+                <option value="President"></option>
+                <option value="COO"></option>
+                <option value="CMO"></option>
+                <option value="CTO"></option>
+                <option value="CEO"></option>
+              </datalist>
+              <div class="field-help">C-level: COO(최고운영책임자), CMO(최고마케팅책임자), CTO(최고기술책임자), CEO(최고경영자)</div>
+            </div>
+            <div class="field">
+              <label for="nameEn">이름 (영문)</label>
+              <input id="nameEn" name="nameEn" value="HanGu Kang">
+              <div class="field-help">직원 정보를 불러온 뒤에도 영문 이름은 직접 수정할 수 있습니다.</div>
+            </div>
+            <div class="field">
+              <label for="addressLabel1">주소1 레이블</label>
+              <input id="addressLabel1" name="addressLabel1" value="산소프트">
+            </div>
+            <div class="field">
+              <label for="address1">주소1</label>
+              <input id="address1" name="address1" value="경기도 구리시 산마루로 5, 302~303호">
+            </div>
+            <div class="field">
+              <label for="addressLabel2">주소2 레이블</label>
+              <input id="addressLabel2" name="addressLabel2" value="기업부설연구소">
+            </div>
+            <div class="field">
+              <label for="address2">주소2</label>
+              <input id="address2" name="address2" value="경기도 구리시 산마루로 5, 305호">
+            </div>
+            <div class="field">
+              <label for="tel">전화 (T)</label>
+              <input id="tel" name="tel" value="1660-1755">
+            </div>
+            <div class="field">
+              <label for="fax">팩스 (F)</label>
+              <input id="fax" name="fax" value="070-7575-0839">
+            </div>
+            <div class="field">
+              <label for="mobile">휴대폰 (M)</label>
+              <input id="mobile" name="mobile" value="010-7522-1755">
+            </div>
+            <div class="field">
+              <label for="email">이메일 (E)</label>
+              <input id="email" name="email" value="hlorient@naver.com">
+            </div>
+            <div class="field">
+              <label for="website">웹사이트</label>
+              <input id="website" name="website" value="sansoft.kr">
+            </div>
+            <div class="form-actions">
+              <button id="saveBasicBtn" class="action-btn primary" type="button">기본 정보 저장</button>
+              <button id="clearBasicBtn" class="action-btn" type="button">저장값 초기화</button>
+            </div>
+          </div>
+
+          <div class="form-page" data-page-panel="design">
+            <div class="field">
+              <label>왼쪽 폰트 색상</label>
+              <div class="swatches">
+                <label class="swatch" style="--swatch:#181E3C"><input type="radio" name="textColor" value="#181E3C" checked></label>
+                <label class="swatch" style="--swatch:#FFFFFF"><input type="radio" name="textColor" value="#FFFFFF"></label>
+              </div>
+            </div>
+            <div class="field">
+              <label>오른쪽 이미지 색상</label>
+              <div class="swatches">
+                <label class="swatch" style="--swatch:#181E3C"><span class="swatch-code">#181E3C</span><input type="radio" name="rightTextColor" value="#181E3C" checked></label>
+                <label class="swatch" style="--swatch:#FFFFFF"><span class="swatch-code">#FFFFFF</span><input type="radio" name="rightTextColor" value="#FFFFFF"></label>
+              </div>
+              <button id="rightTextAutoBtn" class="action-btn" type="button" style="margin-top:10px;width:100%;">배경색 기준 자동 적용</button>
+            </div>
+            <div class="two">
+              <div class="field">
+                <label for="width">좌측 정보 너비</label>
+                <select id="width" name="width">
+                  <option value="390">390px</option>
+                  <option value="370">370px</option>
+                  <option value="410" selected>410px</option>
+                </select>
+              </div>
+            </div>
+            <div class="two">
+              <div class="field">
+                <label for="bgColor">배경색</label>
+                <input id="bgColor" name="bgColor" type="color" value="#ffffff">
+              </div>
+              <div class="field">
+                <label for="rightBg">우측 배경 직접 선택</label>
+                <input id="rightBg" name="rightBg" type="color" value="#e7e7e7">
+              </div>
+            </div>
+            <div class="field">
+              <label>우측 배경 팔레트</label>
+              <div class="swatches">
+                <label class="swatch" style="--swatch:#FACD93"><span class="swatch-code">#FACD93</span><input type="radio" name="rightBgPreset" value="#FACD93"></label>
+                <label class="swatch" style="--swatch:#289CD9"><span class="swatch-code">#289CD9</span><input type="radio" name="rightBgPreset" value="#289CD9"></label>
+                <label class="swatch" style="--swatch:#ACB8BE"><span class="swatch-code">#ACB8BE</span><input type="radio" name="rightBgPreset" value="#ACB8BE"></label>
+                <label class="swatch" style="--swatch:#DFD8CB"><span class="swatch-code">#DFD8CB</span><input type="radio" name="rightBgPreset" value="#DFD8CB"></label>
+                <label class="swatch" style="--swatch:#DBEFF0"><span class="swatch-code">#DBEFF0</span><input type="radio" name="rightBgPreset" value="#DBEFF0"></label>
+                <label class="swatch" style="--swatch:#C1B9DB"><span class="swatch-code">#C1B9DB</span><input type="radio" name="rightBgPreset" value="#C1B9DB"></label>
+                <label class="swatch" style="--swatch:#F1947E"><span class="swatch-code">#F1947E</span><input type="radio" name="rightBgPreset" value="#F1947E"></label>
+                <label class="swatch" style="--swatch:#93C667"><span class="swatch-code">#93C667</span><input type="radio" name="rightBgPreset" value="#93C667"></label>
+              </div>
+            </div>
+            <div class="field">
+              <label for="fontSize">기본 글자 크기</label>
+              <select id="fontSize" name="fontSize">
+                <option value="11">11px</option>
+                <option value="12" selected>12px</option>
+                <option value="13">13px</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-page" data-page-panel="images">
+            <div class="field">
+              <label for="qrColor">QR 색상</label>
+              <input id="qrColor" name="qrColor" type="color" value="#181e3c">
+            </div>
+            <div class="field">
+              <label for="qrUpload">QR 이미지</label>
+              <div class="upload-row">
+                <input id="qrUpload" type="file" accept="image/*">
+                <button class="clear-btn" type="button" data-clear="qr" title="QR 이미지 삭제">×</button>
+              </div>
+            </div>
+            <div class="field">
+              <label for="qrLabel">QR 라벨</label>
+              <input id="qrLabel" name="qrLabel" value="QR Code">
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <aside>
+        <div class="preview-tabs" aria-label="결과 보기">
+          <button class="view-tab active" type="button" data-view="preview">미리보기</button>
+          <button class="view-tab" type="button" data-view="code">HTML 코드</button>
+        </div>
+
+        <div id="previewArea" class="preview-panel">
+          <div class="hint">* 실제 이메일에서의 모습을 미리 확인하세요.</div>
+          <div class="preview-scroll">
+            <div id="signaturePreview" class="signature-shell"></div>
+          </div>
+        </div>
+
+        <textarea id="htmlCode" class="code-box" readonly></textarea>
+        <button id="copyBtn" class="copy-btn" type="button">HTML 복사하기</button>
+
+        <div class="guide">
+          <strong>▣ 네이버 메일 서명 설정 방법</strong>
+          1. HTML 복사하기 버튼 클릭<br>
+          2. 네이버 메일 → 환경설정 → 서명 관리<br>
+          3. HTML 편집 모드로 전환<br>
+          4. 복사한 코드 붙여넣기 (Ctrl+V) → 저장<br><br>
+          <strong>▣ 다음 메일 서명 설정 방법</strong>
+          1. HTML 복사하기 버튼 클릭<br>
+          2. 다음 메일 → 환경설정 → 서명<br>
+          3. 서명 추가 또는 기존 서명 편집<br>
+          4. HTML 입력/편집 화면에 붙여넣기 → 저장<br><br>
+          <strong>▣ Gmail 서명 설정 방법</strong>
+          1. HTML 복사하기 버튼 클릭<br>
+          2. Gmail → 설정 → 모든 설정 보기 → 기본설정<br>
+          3. 서명 항목에서 새 서명 만들기 또는 기존 서명 선택<br>
+          4. 서명 입력 칸에 붙여넣기 (Ctrl+V) → 변경사항 저장
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const form = document.querySelector("#signatureForm");
+    const preview = document.querySelector("#signaturePreview");
+    const htmlCode = document.querySelector("#htmlCode");
+    const previewArea = document.querySelector("#previewArea");
+    const toast = document.querySelector("#toast");
+    const BASIC_STORAGE_KEY = "naverSignatureBasicInfo";
+    const STAFF_QR_STORAGE_KEY = "naverSignatureStaffQrColors";
+    const PUBLIC_ASSET_BASE_URL = "https://clevelpark.github.io/email-signature/";
+    const RIGHT_IMAGE_WIDTH = 240;
+    const SIGNATURE_HEIGHT = 150;
+    const staffPresets = [
+      { nameKo: "강한구", nameEn: "HanGu Kang", position: "대표", mobile: "010-7522-1755", email: "hlorient@naver.com", qrColor: "#F1947E" },
+      { nameKo: "강성경", nameEn: "SungKyeong Kang", position: "주임", mobile: "010-4994-1755", email: "sansoft004@gmail.com", qrColor: "#FACD93" },
+      { nameKo: "김경목", nameEn: "KyungMock Kim", position: "과장", mobile: "010-6217-1755", email: "seobi197805@naver.com", qrColor: "#FACD93" },
+      { nameKo: "김보현", nameEn: "BoHyeon Kim", position: "주임", mobile: "010-4577-1755", email: "sansoft004@gmail.com", qrColor: "#DFD8CB" },
+      { nameKo: "박수희", nameEn: "SuHee Park", position: "차장", mobile: "010-8324-1755", email: "sweet_22@naver.com", qrColor: "#181E3C" },
+      { nameKo: "서영배", nameEn: "YoungBae Seo", position: "이사", mobile: "010-5584-1755", email: "doaringmiya@naver.com", qrColor: "#93C667" },
+      { nameKo: "손무영", nameEn: "MooYoung Son", position: "차장", mobile: "010-3981-1755", email: "wayne44@daum.net", qrColor: "#289CD9" },
+      { nameKo: "신상우", nameEn: "SangWoo Shin", position: "과장", mobile: "010-2436-1755", email: "stech1544@naver.com", qrColor: "#DFD8CB" },
+      { nameKo: "오세원", nameEn: "SeWon Oh", position: "본부장", mobile: "010-7794-1755", email: "ohsewon@daum.net", qrColor: "#ACB8BE" },
+      { nameKo: "채성길", nameEn: "SungKil Chai", position: "연구소장", mobile: "010-7618-1755", email: "jacobsk@naver.com", qrColor: "#181E3C" },
+      { nameKo: "최하율", nameEn: "HaYul Choe", position: "대리", mobile: "010-7658-1755", email: "soapdlf0323@naver.com", qrColor: "#C1B9DB" }
+    ];
+    const staffDefaultColors = {
+      "HanGu Kang": "#F1947E",
+      "SungKyeong Kang": "#FACD93",
+      "KyungMock Kim": "#FACD93",
+      "BoHyeon Kim": "#DFD8CB",
+      "SuHee Park": "#DBEFF0",
+      "YoungBae Seo": "#93C667",
+      "MooYoung Son": "#289CD9",
+      "SangWoo Shin": "#DFD8CB",
+      "SeWon Oh": "#ACB8BE",
+      "SungKil Chai": "#DBEFF0",
+      "HaYul Choe": "#C1B9DB"
+    };
+    staffPresets.forEach((staff) => {
+      staff.rightBg = staffDefaultColors[staff.nameEn] || "#F1947E";
+    });
+    const positionEnglish = {
+      "대표": "CEO",
+      "사장": "President",
+      "본부장": "General Manager",
+      "부장": "General Manager",
+      "연구소장": "R&D Director",
+      "이사": "Director",
+      "팀장": "Team Leader",
+      "차장": "Senior Manager",
+      "과장": "Manager",
+      "대리": "Assistant Manager",
+      "주임": "Supervisor",
+      "사원": "Staff"
+    };
+    const englishOfficeInfo = {
+      addressLabel1: "SANSOFT",
+      addressLabel2: "R&D Center",
+      address1: "Room 302-303, 5 Sanmaru-ro, Guri-si, Gyeonggi-do, Korea",
+      address2: "Room 305, 5 Sanmaru-ro, Guri-si, Gyeonggi-do, Korea",
+      website: "sansoft.kr"
+    };
+    const basicFieldNames = [
+      "signatureLang",
+      "nameKo",
+      "position",
+      "positionEn",
+      "nameEn",
+      "addressLabel1",
+      "address1",
+      "addressLabel2",
+      "address2",
+      "tel",
+      "fax",
+      "mobile",
+      "email",
+      "website",
+      "width",
+      "bgColor",
+      "rightBg",
+      "fontSize",
+      "qrLabel",
+      "qrColor",
+      "textColor",
+      "rightTextColor"
+    ];
+    const defaultBasicData = {};
+    const DEFAULT_INFO_LOGO_SRC = "info-logo.png";
+    const DEFAULT_RIGHT_IMAGE_SRC = "right-default.png";
+    const DEFAULT_QR_IMAGE_SRC = "qr-default.png";
+    const state = {
+      infoLogoData: DEFAULT_INFO_LOGO_SRC,
+      rightImageSourceData: DEFAULT_RIGHT_IMAGE_SRC,
+      rightImageData: DEFAULT_RIGHT_IMAGE_SRC,
+      rightImageKoData: "",
+      rightImageEnData: "",
+      qrSourceData: DEFAULT_QR_IMAGE_SRC,
+      qrData: "",
+      qrColorManual: false,
+      rightTextColorManual: false
+    };
+    const staffCustomQrColors = {};
+
+    const escapeHtml = (value) => String(value || "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;");
+
+    const lineBreaks = (value) => escapeHtml(value).replace(/\n/g, "<br>");
+
+    basicFieldNames.forEach((name) => {
+      defaultBasicData[name] = form.elements[name]?.value || "";
+    });
+
+    function getData() {
+      const data = Object.fromEntries(new FormData(form).entries());
+      data.textColor = form.querySelector("input[name='textColor']:checked").value;
+      data.rightTextColor = form.querySelector("input[name='rightTextColor']:checked").value;
+      return data;
+    }
+
+    function normalizeHex(value) {
+      const hex = String(value || "").replace("#", "");
+      if (!/^[0-9a-f]{6}$/i.test(hex)) return "#181E3C";
+      return `#${hex.toUpperCase()}`;
+    }
+
+    function mixHex(color, base, amount) {
+      const from = normalizeHex(color).slice(1).match(/[0-9A-F]{2}/g).map((value) => parseInt(value, 16));
+      const to = normalizeHex(base).slice(1).match(/[0-9A-F]{2}/g).map((value) => parseInt(value, 16));
+      const mixed = from.map((value, index) => Math.round(value + (to[index] - value) * amount));
+      return `#${mixed.map((value) => value.toString(16).padStart(2, "0")).join("").toUpperCase()}`;
+    }
+
+    function getAutoQrColor() {
+      const bg = normalizeHex(form.elements.rightBg.value);
+      if (bg === "#DBEFF0") return "#181E3C";
+      if (bg !== "#DFD8CB") return bg;
+      const rgb = bg.slice(1).match(/[0-9A-F]{2}/g).map((value) => parseInt(value, 16));
+      const luminance = (rgb[0] * 0.299) + (rgb[1] * 0.587) + (rgb[2] * 0.114);
+      if (luminance > 220) return mixHex(bg, "#181E3C", 0.72);
+      if (luminance > 170) return mixHex(bg, "#181E3C", 0.46);
+      return bg;
+    }
+
+    function getRightBgLuminance() {
+      const bg = normalizeHex(form.elements.rightBg.value);
+      const rgb = bg.slice(1).match(/[0-9A-F]{2}/g).map((value) => parseInt(value, 16));
+      return (rgb[0] * 0.299) + (rgb[1] * 0.587) + (rgb[2] * 0.114);
+    }
+
+    function getAutoRightTextColor() {
+      return normalizeHex(form.elements.rightBg.value) === "#DBEFF0" ? "#181E3C" : "#FFFFFF";
+    }
+
+    function setRightTextColorControl(color) {
+      const target = normalizeHex(color);
+      document.querySelectorAll("input[name='rightTextColor']").forEach((input) => {
+        input.checked = normalizeHex(input.value) === target;
+      });
+    }
+
+    function syncRightBgPresetSelection() {
+      const rightBg = normalizeHex(form.elements.rightBg.value);
+      document.querySelectorAll("input[name='rightBgPreset']").forEach((input) => {
+        input.checked = normalizeHex(input.value) === rightBg;
+      });
+    }
+
+    async function updateRightImages() {
+      await colorizeRightImage();
+      await generateKoreanRightImage();
+      await generateEnglishRightImage();
+    }
+
+    async function syncRightTextColorWithRightBg(force = false) {
+      if (!force && state.rightTextColorManual) return;
+      setRightTextColorControl(getAutoRightTextColor());
+      await updateRightImages();
+    }
+
+    async function syncQrColorWithRightBg(force = false) {
+      if (!force && state.qrColorManual) return;
+      form.elements.qrColor.value = getAutoQrColor();
+      await colorizeQr();
+    }
+
+    function getBasicData() {
+      const data = basicFieldNames.reduce((data, name) => {
+        data[name] = form.elements[name]?.value || "";
+        return data;
+      }, {});
+      data.qrColorManual = state.qrColorManual;
+      data.rightTextColorManual = state.rightTextColorManual;
+      return data;
+    }
+
+    function saveBasicInfo(showMessage = true) {
+      localStorage.setItem(BASIC_STORAGE_KEY, JSON.stringify(getBasicData()));
+      if (showMessage) showToast("기본 정보가 저장되었습니다.");
+    }
+
+    function loadBasicInfo() {
+      const saved = localStorage.getItem(BASIC_STORAGE_KEY);
+      if (!saved) return false;
+      try {
+        const data = JSON.parse(saved);
+        if (data.address1 === "경기도 구리시 산마루로 5, 307호") {
+          data.address1 = "경기도 구리시 산마루로 5, 302~303호";
+          localStorage.setItem(BASIC_STORAGE_KEY, JSON.stringify(data));
+        }
+        basicFieldNames.forEach((name) => {
+          if (Object.prototype.hasOwnProperty.call(data, name) && form.elements[name]) {
+            form.elements[name].value = data[name];
+          }
+        });
+        if (!data.positionEn) syncEnglishPositionFromKorean();
+        state.qrColorManual = data.qrColorManual === true;
+        state.rightTextColorManual = data.rightTextColorManual === true;
+        syncRightBgPresetSelection();
+        return true;
+      } catch {
+        localStorage.removeItem(BASIC_STORAGE_KEY);
+        return false;
+      }
+    }
+
+    function clearBasicInfo() {
+      localStorage.removeItem(BASIC_STORAGE_KEY);
+      basicFieldNames.forEach((name) => {
+        if (form.elements[name]) form.elements[name].value = defaultBasicData[name];
+      });
+      state.qrColorManual = false;
+      state.rightTextColorManual = false;
+      syncRightBgPresetSelection();
+      render();
+      showToast("저장된 기본 정보를 초기화했습니다.");
+    }
+
+    function fillStaffPresetSelect() {
+      const select = document.querySelector("#staffPreset");
+      staffPresets.forEach((staff, index) => {
+        const option = document.createElement("option");
+        option.value = String(index);
+        option.textContent = staff.nameKo;
+        select.appendChild(option);
+      });
+    }
+
+    function loadStaffQrColors() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(STAFF_QR_STORAGE_KEY) || "{}");
+        staffPresets.forEach((staff) => {
+          if (saved[staff.nameKo]) {
+            staff.qrColor = saved[staff.nameKo];
+            staffCustomQrColors[staff.nameKo] = saved[staff.nameKo];
+          }
+        });
+      } catch {
+        localStorage.removeItem(STAFF_QR_STORAGE_KEY);
+      }
+    }
+
+    function saveStaffQrColor(staff) {
+      if (!staff) return;
+      const saved = JSON.parse(localStorage.getItem(STAFF_QR_STORAGE_KEY) || "{}");
+      saved[staff.nameKo] = staff.qrColor;
+      localStorage.setItem(STAFF_QR_STORAGE_KEY, JSON.stringify(saved));
+    }
+
+    function syncEnglishPositionFromKorean() {
+      const mappedPosition = positionEnglish[form.elements.position.value];
+      if (mappedPosition) form.elements.positionEn.value = mappedPosition;
+    }
+
+    async function applyStaffPreset(index) {
+      const staff = staffPresets[Number(index)];
+      if (!staff) return;
+      ["nameKo", "nameEn", "position", "mobile", "email"].forEach((name) => {
+        form.elements[name].value = staff[name] || "";
+      });
+      form.elements.positionEn.value = positionEnglish[staff.position] || staff.position || "";
+      form.elements.width.value = "410";
+      form.elements.rightBg.value = staff.rightBg || "#F1947E";
+      state.rightTextColorManual = false;
+      syncRightBgPresetSelection();
+      await syncRightTextColorWithRightBg(true);
+      if (staffCustomQrColors[staff.nameKo]) {
+        state.qrColorManual = true;
+        form.elements.qrColor.value = staffCustomQrColors[staff.nameKo];
+        await colorizeQr();
+      } else {
+        state.qrColorManual = false;
+        await syncQrColorWithRightBg(true);
+      }
+      render();
+      saveBasicInfo(false);
+      showToast(`${staff.nameKo}님의 정보를 불러왔습니다.`);
+    }
+
+    function getSignatureMetrics() {
+      const data = getData();
+      const leftWidth = Number(data.width || 390);
+      const rightWidth = RIGHT_IMAGE_WIDTH;
+      return {
+        leftWidth,
+        rightWidth,
+        width: leftWidth + rightWidth,
+        height: SIGNATURE_HEIGHT
+      };
+    }
+
+    async function loadDefaultRightImage() {
+      try {
+        const response = await fetch(DEFAULT_RIGHT_IMAGE_SRC);
+        const blob = await response.blob();
+        state.rightImageSourceData = await dataUrlFromBlob(blob);
+        await colorizeRightImage();
+      } catch {
+        state.rightImageSourceData = DEFAULT_RIGHT_IMAGE_SRC;
+        state.rightImageData = DEFAULT_RIGHT_IMAGE_SRC;
+      }
+      await generateKoreanRightImage();
+      await generateEnglishRightImage();
+      render();
+    }
+
+    async function colorizeRightImage() {
+      try {
+        const data = getData();
+        const image = await loadImage(state.rightImageSourceData || DEFAULT_RIGHT_IMAGE_SRC);
+        const sourceWidth = image.naturalWidth || image.width;
+        const sourceHeight = image.naturalHeight || image.height;
+        const canvas = document.createElement("canvas");
+        canvas.width = sourceWidth;
+        canvas.height = sourceHeight;
+        const context = canvas.getContext("2d");
+        context.drawImage(image, 0, 0, sourceWidth, sourceHeight, 0, 0, sourceWidth, sourceHeight);
+        const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+        const target = data.rightTextColor.match(/[0-9a-f]{2}/gi).map((value) => parseInt(value, 16));
+        for (let index = 0; index < imageData.data.length; index += 4) {
+          if (imageData.data[index + 3] > 4) {
+            imageData.data[index] = target[0];
+            imageData.data[index + 1] = target[1];
+            imageData.data[index + 2] = target[2];
+          }
+        }
+        context.putImageData(imageData, 0, 0);
+        const cropped = document.createElement("canvas");
+        cropped.width = sourceWidth;
+        cropped.height = sourceHeight;
+        cropped.getContext("2d").drawImage(canvas, 55, 0, sourceWidth - 55, sourceHeight, 0, 0, sourceWidth, sourceHeight);
+        state.rightImageData = cropped.toDataURL("image/png");
+      } catch {
+        state.rightImageData = state.rightImageSourceData || DEFAULT_RIGHT_IMAGE_SRC;
+      }
+    }
+
+    async function generateKoreanRightImage() {
+      try {
+        const baseImage = await loadImage(state.rightImageData || DEFAULT_RIGHT_IMAGE_SRC);
+        const width = baseImage.naturalWidth || baseImage.width;
+        const height = baseImage.naturalHeight || baseImage.height;
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const context = canvas.getContext("2d");
+        const ink = getData().rightTextColor || "#181E3C";
+        const fitText = (text, x, y, maxWidth, startSize, weight = 800) => {
+          let size = startSize;
+          do {
+            context.font = `${weight} ${size}px Pretendard, 'Noto Sans KR', 'Malgun Gothic', Arial, sans-serif`;
+            if (context.measureText(text).width <= maxWidth) break;
+            size -= 1;
+          } while (size > 18);
+          context.fillText(text, x, y);
+        };
+
+        context.clearRect(0, 0, width, height);
+        context.drawImage(baseImage, 0, 0, width, height);
+        context.clearRect(0, 145, 575, 300);
+
+        context.fillStyle = ink;
+        fitText("산소프트", 70, 264, 500, 30, 800);
+        fitText("의료데이터로 미래 표준을 만들어갑니다", 70, 308, 560, 27, 800);
+        context.font = "800 52px Pretendard, 'Noto Sans KR', 'Malgun Gothic', Arial, sans-serif";
+        context.fillText("1660-1755", 70, 398);
+
+        state.rightImageKoData = canvas.toDataURL("image/png");
+      } catch {
+        state.rightImageKoData = state.rightImageData || DEFAULT_RIGHT_IMAGE_SRC;
+      }
+    }
+
+    async function generateEnglishRightImage() {
+      try {
+        const baseImage = await loadImage(state.rightImageData || DEFAULT_RIGHT_IMAGE_SRC);
+        const width = baseImage.naturalWidth || baseImage.width;
+        const height = baseImage.naturalHeight || baseImage.height;
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const context = canvas.getContext("2d");
+        const ink = getData().rightTextColor || "#181E3C";
+        const fitText = (text, x, y, maxWidth, startSize, weight = 700) => {
+          let size = startSize;
+          do {
+            context.font = `${weight} ${size}px Pretendard, 'Noto Sans KR', Arial, sans-serif`;
+            if (context.measureText(text).width <= maxWidth) break;
+            size -= 1;
+          } while (size > 15);
+          context.fillText(text, x, y);
+        };
+
+        context.clearRect(0, 0, width, height);
+        context.drawImage(baseImage, 0, 0, width, height);
+        context.clearRect(0, 145, 575, 300);
+
+        context.fillStyle = ink;
+        fitText("SANSOFT,", 70, 267, 520, 33, 700);
+        fitText("Creating future standards with medical data", 70, 316, 555, 25, 700);
+        context.font = "800 49px Pretendard, 'Noto Sans KR', Arial, sans-serif";
+        context.fillText("+82-1660-1755", 70, 406);
+
+        state.rightImageEnData = canvas.toDataURL("image/png");
+      } catch {
+        state.rightImageEnData = state.rightImageData || DEFAULT_RIGHT_IMAGE_SRC;
+      }
+    }
+
+    async function loadDefaultInfoLogo() {
+      try {
+        const response = await fetch(DEFAULT_INFO_LOGO_SRC);
+        const blob = await response.blob();
+        const reader = new FileReader();
+        reader.onload = () => {
+          state.infoLogoData = reader.result;
+          render();
+        };
+        reader.readAsDataURL(blob);
+      } catch {
+        state.infoLogoData = DEFAULT_INFO_LOGO_SRC;
+      }
+    }
+
+    async function dataUrlFromBlob(blob) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    }
+
+    async function loadImage(src) {
+      return new Promise((resolve, reject) => {
+        const image = new Image();
+        image.onload = () => resolve(image);
+        image.onerror = reject;
+        image.src = src;
+      });
+    }
+
+    async function colorizeQr() {
+      try {
+        const data = getData();
+        const image = await loadImage(state.qrSourceData || DEFAULT_QR_IMAGE_SRC);
+        const canvas = document.createElement("canvas");
+        canvas.width = image.naturalWidth || image.width;
+        canvas.height = image.naturalHeight || image.height;
+        const context = canvas.getContext("2d");
+        context.drawImage(image, 0, 0);
+        const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+        const target = data.qrColor.match(/[0-9a-f]{2}/gi).map((value) => parseInt(value, 16));
+        for (let index = 0; index < imageData.data.length; index += 4) {
+          const alpha = imageData.data[index + 3];
+          const brightness = (imageData.data[index] + imageData.data[index + 1] + imageData.data[index + 2]) / 3;
+          if (alpha > 8 && brightness < 245) {
+            imageData.data[index] = target[0];
+            imageData.data[index + 1] = target[1];
+            imageData.data[index + 2] = target[2];
+          }
+        }
+        context.putImageData(imageData, 0, 0);
+        state.qrData = canvas.toDataURL("image/png");
+      } catch {
+        state.qrData = state.qrSourceData || DEFAULT_QR_IMAGE_SRC;
+      }
+    }
+
+    async function loadDefaultQrImage() {
+      try {
+        const response = await fetch(DEFAULT_QR_IMAGE_SRC);
+        const blob = await response.blob();
+        state.qrSourceData = await dataUrlFromBlob(blob);
+      } catch {
+        state.qrSourceData = DEFAULT_QR_IMAGE_SRC;
+      }
+      await colorizeQr();
+      render();
+    }
+
+    function detail(label, value, color) {
+      if (!value) return "";
+      return `<span style="font-weight:700;color:${color};">${label}</span> ${escapeHtml(value)}`;
+    }
+
+    function formatKoreanPhoneForEnglish(value) {
+      if (!value) return "";
+      const digits = value.replace(/\D/g, "");
+      if (!digits) return value;
+      if (digits.startsWith("02")) return `+82-2-${digits.slice(2).replace(/(\d{3,4})(\d{4})$/, "$1-$2")}`;
+      if (digits.startsWith("010")) return `+82-10-${digits.slice(3).replace(/(\d{4})(\d{4})$/, "$1-$2")}`;
+      if (digits.startsWith("070")) return `+82-70-${digits.slice(3).replace(/(\d{4})(\d{4})$/, "$1-$2")}`;
+      if (/^\d{8}$/.test(digits)) return `+82-${digits.replace(/(\d{4})(\d{4})$/, "$1-$2")}`;
+      if (digits.startsWith("0")) return `+82-${digits.slice(1).replace(/(\d{3,4})(\d{4})$/, "$1-$2")}`;
+      return value;
+    }
+
+    function getDisplayData(data) {
+      if (data.signatureLang !== "en") {
+        return {
+          primaryName: data.nameKo,
+          secondaryName: data.nameEn,
+          position: data.position,
+          addressLabel1: data.addressLabel1,
+          addressLabel2: data.addressLabel2,
+          address1: data.address1,
+          address2: data.address2,
+          website: data.website,
+          tel: data.tel,
+          fax: data.fax,
+          mobile: data.mobile,
+          email: data.email
+        };
+      }
+
+      const englishPosition = data.positionEn || positionEnglish[data.position] || data.position;
+      return {
+        primaryName: data.nameEn || data.nameKo,
+        secondaryName: englishPosition,
+        position: englishPosition,
+        ...englishOfficeInfo,
+        tel: formatKoreanPhoneForEnglish(data.tel),
+        fax: formatKoreanPhoneForEnglish(data.fax),
+        mobile: formatKoreanPhoneForEnglish(data.mobile),
+        email: data.email
+      };
+    }
+
+    function assetUrl(fileName) {
+      const isLocal = ["127.0.0.1", "localhost", ""].includes(window.location.hostname);
+      const baseUrl = isLocal ? PUBLIC_ASSET_BASE_URL : window.location.href;
+      return new URL(fileName, baseUrl).href;
+    }
+
+    function createSignatureHtml(usePreviewImages = false) {
+      const data = getData();
+      const display = getDisplayData(data);
+      const { width, leftWidth, rightWidth, height } = getSignatureMetrics();
+      const infoLogo = usePreviewImages ? (state.infoLogoData || DEFAULT_INFO_LOGO_SRC) : assetUrl(DEFAULT_INFO_LOGO_SRC);
+      const rightImage = usePreviewImages
+        ? (data.signatureLang === "en"
+          ? (state.rightImageEnData || state.rightImageData || DEFAULT_RIGHT_IMAGE_SRC)
+          : (state.rightImageKoData || state.rightImageData || DEFAULT_RIGHT_IMAGE_SRC))
+        : assetUrl(DEFAULT_RIGHT_IMAGE_SRC);
+      const qrImage = usePreviewImages
+        ? (state.qrData || state.qrSourceData || DEFAULT_QR_IMAGE_SRC)
+        : assetUrl(DEFAULT_QR_IMAGE_SRC);
+      const qr = `<img src="${qrImage}" alt="${escapeHtml(data.qrLabel)}" width="34" style="display:block;width:34px;height:34px;object-fit:contain;border:0;margin:0 auto 1px;">`;
+      const isEnglish = data.signatureLang === "en";
+      const titleFontSize = isEnglish ? 14 : 16;
+      const positionFontSize = isEnglish ? 8.5 : 9.5;
+      const subNameFontSize = isEnglish ? 8.5 : 9.5;
+      const addressFontSize = isEnglish ? 8 : Math.min(Number(data.fontSize || 12), 10);
+      const contactFontSize = isEnglish ? 8 : Math.min(Number(data.fontSize || 12), 10);
+      const addressLabelWidth = isEnglish ? 60 : 84;
+      const leftPadding = isEnglish ? "26px 12px 2px 14px" : "22px 12px 4px 14px";
+
+      return `
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="${width}" style="width:${width}px;border-collapse:collapse;background:${data.bgColor};font-family:Pretendard,'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','맑은 고딕',Arial,sans-serif;color:${data.textColor};">
+  <tr>
+    <td width="${leftWidth}" valign="top" style="width:${leftWidth}px;padding:${leftPadding};background:${data.bgColor};">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
+        <tr>
+          <td valign="top" style="padding:0 0 5px 0;border-bottom:1px solid #e5e7eb;">
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
+              <tr>
+                <td valign="top" style="padding:0;white-space:nowrap;">
+                  <div style="font-size:${titleFontSize}px;line-height:1.1;font-weight:800;color:${data.textColor};white-space:nowrap;">${escapeHtml(display.primaryName)}${isEnglish ? "" : ` <span style="font-size:${positionFontSize}px;font-weight:500;color:${data.textColor};white-space:nowrap;">${escapeHtml(display.position)}</span>`}</div>
+                  <div style="padding-top:2px;font-size:${subNameFontSize}px;color:${data.textColor};white-space:nowrap;">${escapeHtml(display.secondaryName)}</div>
+                </td>
+                <td valign="top" align="right" style="padding:6px 0 0 8px;width:78px;line-height:0;">
+                  <img src="${infoLogo}" width="76" alt="SANSOFT" style="display:block;width:76px;height:auto;border:0;">
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding-top:5px;">
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;font-size:${addressFontSize}px;line-height:1.22;color:${data.textColor};">
+              <tr>
+                <td valign="top" style="width:${addressLabelWidth}px;padding:0 8px 4px 0;font-weight:800;color:${data.textColor};white-space:nowrap;">${escapeHtml(display.addressLabel1)}<br>${escapeHtml(display.addressLabel2)}</td>
+                <td valign="top" style="padding:0 0 4px 0;color:${data.textColor};white-space:nowrap;">${escapeHtml(display.address1)}<br>${escapeHtml(display.address2)}</td>
+              </tr>
+            </table>
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;font-size:${contactFontSize}px;line-height:1.22;color:${data.textColor};">
+              <tr>
+                <td style="padding-right:12px;white-space:nowrap;">${detail("T", display.tel, data.textColor)}</td>
+                <td style="white-space:nowrap;">${detail("F", display.fax, data.textColor)}</td>
+                <td rowspan="3" valign="top" align="right" style="width:42px;padding:0 0 0 5px;text-align:right;">
+                  ${qr}
+                </td>
+              </tr>
+              <tr>
+                <td style="padding-right:12px;white-space:nowrap;">${detail("M", display.mobile, data.textColor)}</td>
+                <td style="white-space:nowrap;">${detail("E", display.email, data.textColor)}</td>
+              </tr>
+              <tr>
+                <td colspan="2" style="padding-top:1px;font-size:${contactFontSize}px;color:${data.textColor};white-space:nowrap;">${escapeHtml(display.website)}</td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </td>
+    <td width="${rightWidth}" valign="middle" style="width:${rightWidth}px;height:${height}px;padding:0;background:${data.rightBg};line-height:0;">
+      <img src="${rightImage}" width="${rightWidth}" height="${height}" alt="" style="display:block;width:${rightWidth}px;height:${height}px;object-fit:fill;border:0;">
+    </td>
+  </tr>
+</table>`.trim();
+    }
+
+    function render() {
+      const previewHtml = createSignatureHtml(true);
+      const copyHtml = createSignatureHtml(false);
+      preview.innerHTML = previewHtml;
+      preview.style.width = `${getSignatureMetrics().width}px`;
+      htmlCode.value = copyHtml;
+    }
+
+    function showToast(message) {
+      toast.textContent = message;
+      toast.classList.add("show");
+      window.clearTimeout(showToast.timer);
+      showToast.timer = window.setTimeout(() => toast.classList.remove("show"), 2200);
+    }
+
+    async function copyHtml() {
+      const html = createSignatureHtml();
+      try {
+        if (navigator.clipboard && window.ClipboardItem) {
+          await navigator.clipboard.write([
+            new ClipboardItem({
+              "text/html": new Blob([html], { type: "text/html" }),
+              "text/plain": new Blob([html], { type: "text/plain" })
+            })
+          ]);
+        } else if (navigator.clipboard) {
+          await navigator.clipboard.writeText(html);
+        } else {
+          htmlCode.style.display = "block";
+          htmlCode.select();
+          document.execCommand("copy");
+        }
+        showToast("HTML 서명이 복사되었습니다.");
+      } catch {
+        htmlCode.style.display = "block";
+        htmlCode.select();
+        document.execCommand("copy");
+        showToast("HTML 코드를 선택해 두었습니다. Ctrl+C로 복사하세요.");
+      }
+    }
+
+    function readImage(file, key) {
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = async () => {
+        state[key] = reader.result;
+        if (key === "qrSourceData") await colorizeQr();
+        render();
+      };
+      reader.readAsDataURL(file);
+    }
+
+    document.querySelectorAll(".tab").forEach((button) => {
+      button.addEventListener("click", () => {
+        document.querySelectorAll(".tab").forEach((tab) => tab.classList.toggle("active", tab === button));
+        document.querySelectorAll(".form-page").forEach((page) => {
+          page.classList.toggle("active", page.dataset.pagePanel === button.dataset.page);
+        });
+      });
+    });
+
+    document.querySelectorAll(".view-tab").forEach((button) => {
+      button.addEventListener("click", () => {
+        const isPreview = button.dataset.view === "preview";
+        document.querySelectorAll(".view-tab").forEach((tab) => tab.classList.toggle("active", tab === button));
+        previewArea.style.display = isPreview ? "block" : "none";
+        htmlCode.style.display = isPreview ? "none" : "block";
+      });
+    });
+
+    document.querySelector("#copyBtn").addEventListener("click", copyHtml);
+    document.querySelector("#saveBasicBtn").addEventListener("click", () => saveBasicInfo(true));
+    document.querySelector("#clearBasicBtn").addEventListener("click", clearBasicInfo);
+    document.querySelector("#staffPreset").addEventListener("change", (event) => applyStaffPreset(event.target.value));
+    document.querySelector("#position").addEventListener("input", () => {
+      syncEnglishPositionFromKorean();
+      render();
+      saveBasicInfo(false);
+    });
+    document.querySelector("#position").addEventListener("change", () => {
+      syncEnglishPositionFromKorean();
+      render();
+      saveBasicInfo(false);
+    });
+    document.querySelectorAll("input[name='textColor']").forEach((input) => {
+      input.addEventListener("change", () => {
+        render();
+      });
+    });
+    document.querySelectorAll("input[name='rightTextColor']").forEach((input) => {
+      input.addEventListener("change", async () => {
+        state.rightTextColorManual = true;
+        await updateRightImages();
+        render();
+        saveBasicInfo(false);
+      });
+    });
+    document.querySelector("#rightTextAutoBtn").addEventListener("click", async () => {
+      state.rightTextColorManual = false;
+      await syncRightTextColorWithRightBg(true);
+      render();
+      saveBasicInfo(false);
+    });
+    document.querySelectorAll("input[name='rightBgPreset']").forEach((input) => {
+      input.addEventListener("change", async () => {
+        document.querySelector("#rightBg").value = input.value;
+        await syncRightTextColorWithRightBg(false);
+        await syncQrColorWithRightBg(false);
+        render();
+        saveBasicInfo(false);
+      });
+    });
+    document.querySelector("#rightBg").addEventListener("input", async () => {
+      document.querySelectorAll("input[name='rightBgPreset']").forEach((input) => {
+        input.checked = input.value.toLowerCase() === document.querySelector("#rightBg").value.toLowerCase();
+      });
+      await syncRightTextColorWithRightBg(false);
+      await syncQrColorWithRightBg(false);
+      render();
+      saveBasicInfo(false);
+    });
+    document.querySelector("#qrUpload").addEventListener("change", (event) => readImage(event.target.files[0], "qrSourceData"));
+    document.querySelector("#qrColor").addEventListener("input", async () => {
+      state.qrColorManual = true;
+      const selectedStaff = staffPresets[Number(document.querySelector("#staffPreset").value)];
+      if (selectedStaff) {
+        selectedStaff.qrColor = document.querySelector("#qrColor").value;
+        staffCustomQrColors[selectedStaff.nameKo] = selectedStaff.qrColor;
+        saveStaffQrColor(selectedStaff);
+      }
+      await colorizeQr();
+      render();
+      saveBasicInfo(false);
+    });
+    document.querySelectorAll("[data-clear]").forEach((button) => {
+      button.addEventListener("click", () => {
+        state.qrSourceData = DEFAULT_QR_IMAGE_SRC;
+        state.qrData = "";
+        const input = document.querySelector("#qrUpload");
+        input.value = "";
+        loadDefaultQrImage();
+      });
+    });
+
+    form.addEventListener("input", (event) => {
+      render();
+      if (basicFieldNames.includes(event.target.name)) saveBasicInfo(false);
+    });
+    form.addEventListener("change", (event) => {
+      render();
+      if (basicFieldNames.includes(event.target.name)) saveBasicInfo(false);
+    });
+    loadStaffQrColors();
+    fillStaffPresetSelect();
+    loadBasicInfo();
+    syncRightBgPresetSelection();
+    if (!state.rightTextColorManual) setRightTextColorControl(getAutoRightTextColor());
+    if (!state.qrColorManual) syncQrColorWithRightBg(true);
+    loadDefaultInfoLogo();
+    loadDefaultRightImage();
+    loadDefaultQrImage();
+    render();
+  </script>
+</body>
+</html>
