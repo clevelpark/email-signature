@@ -624,7 +624,7 @@
     const BASIC_STORAGE_KEY = "naverSignatureBasicInfo";
     const STAFF_QR_STORAGE_KEY = "naverSignatureStaffQrColors";
     const PUBLIC_ASSET_BASE_URL = "https://clevelpark.github.io/email-signature/";
-    const RIGHT_IMAGE_WIDTH = 240;
+    const RIGHT_IMAGE_WIDTH = 228;
     const SIGNATURE_HEIGHT = 150;
     const staffPresets = [
       { nameKo: "강한구", nameEn: "HanGu Kang", position: "대표", mobile: "010-7522-1755", email: "hlorient@naver.com", qrColor: "#F1947E" },
@@ -1189,10 +1189,10 @@
       const titleFontSize = isEnglish ? 14 : 16;
       const positionFontSize = isEnglish ? 8.5 : 9.5;
       const subNameFontSize = isEnglish ? 8.5 : 9.5;
-      const addressFontSize = isEnglish ? 8 : Math.min(Number(data.fontSize || 12), 10);
-      const contactFontSize = isEnglish ? 8 : Math.min(Number(data.fontSize || 12), 10);
+      const addressFontSize = isEnglish ? 8.4 : Math.min(Number(data.fontSize || 12), 10.7);
+      const contactFontSize = isEnglish ? 8.4 : Math.min(Number(data.fontSize || 12), 10.7);
       const addressLabelWidth = isEnglish ? 60 : 84;
-      const leftPadding = isEnglish ? "26px 12px 2px 14px" : "22px 12px 4px 14px";
+      const leftPadding = isEnglish ? "26px 6px 2px 14px" : "22px 6px 4px 14px";
 
       return `
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="${width}" style="width:${width}px;border-collapse:collapse;background:${data.bgColor};font-family:Pretendard,'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','맑은 고딕',Arial,sans-serif;color:${data.textColor};">
@@ -1216,13 +1216,13 @@
         </tr>
         <tr>
           <td style="padding-top:5px;">
-            <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;font-size:${addressFontSize}px;line-height:1.22;color:${data.textColor};">
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;font-size:${addressFontSize}px;line-height:1.2;color:${data.textColor};">
               <tr>
-                <td valign="top" style="width:${addressLabelWidth}px;padding:0 8px 4px 0;font-weight:800;color:${data.textColor};white-space:nowrap;">${escapeHtml(display.addressLabel1)}<br>${escapeHtml(display.addressLabel2)}</td>
+                <td valign="top" style="width:${addressLabelWidth}px;padding:0 6px 4px 0;font-weight:800;color:${data.textColor};white-space:nowrap;">${escapeHtml(display.addressLabel1)}<br>${escapeHtml(display.addressLabel2)}</td>
                 <td valign="top" style="padding:0 0 4px 0;color:${data.textColor};white-space:nowrap;">${escapeHtml(display.address1)}<br>${escapeHtml(display.address2)}</td>
               </tr>
             </table>
-            <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;font-size:${contactFontSize}px;line-height:1.22;color:${data.textColor};">
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;font-size:${contactFontSize}px;line-height:1.2;color:${data.textColor};">
               <tr>
                 <td style="padding-right:12px;white-space:nowrap;">${detail("T", display.tel, data.textColor)}</td>
                 <td style="white-space:nowrap;">${detail("F", display.fax, data.textColor)}</td>
