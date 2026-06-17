@@ -703,7 +703,21 @@
     const defaultBasicData = {};
     const DEFAULT_INFO_LOGO_SRC = "info-logo.png";
     const DEFAULT_RIGHT_IMAGE_SRC = "right-default.png";
+    const WHITE_RIGHT_IMAGE_SRC = "right-white.png";
     const DEFAULT_QR_IMAGE_SRC = "qr-default.png";
+    const QR_ASSET_COLORS = new Set([
+      "#FFFFFF",
+      "#181E3C",
+      "#F1947E",
+      "#FACD93",
+      "#289CD9",
+      "#ACB8BE",
+      "#DFD8CB",
+      "#DBEFF0",
+      "#C1B9DB",
+      "#93C667",
+      "#838289"
+    ]);
     const state = {
       infoLogoData: DEFAULT_INFO_LOGO_SRC,
       rightImageSourceData: DEFAULT_RIGHT_IMAGE_SRC,
@@ -1171,6 +1185,16 @@
       return new URL(fileName, baseUrl).href;
     }
 
+    function copyRightImageSrc(data) {
+      return normalizeHex(data.rightTextColor) === "#FFFFFF" ? WHITE_RIGHT_IMAGE_SRC : DEFAULT_RIGHT_IMAGE_SRC;
+    }
+
+    function copyQrImageSrc(data) {
+      const color = normalizeHex(data.qrColor);
+      if (!QR_ASSET_COLORS.has(color)) return DEFAULT_QR_IMAGE_SRC;
+      return `qr-${color.slice(1).toLowerCase()}.png`;
+    }
+
     function createSignatureHtml(usePreviewImages = false) {
       const data = getData();
       const display = getDisplayData(data);
@@ -1180,10 +1204,10 @@
         ? (data.signatureLang === "en"
           ? (state.rightImageEnData || state.rightImageData || DEFAULT_RIGHT_IMAGE_SRC)
           : (state.rightImageKoData || state.rightImageData || DEFAULT_RIGHT_IMAGE_SRC))
-        : assetUrl(DEFAULT_RIGHT_IMAGE_SRC);
+        : assetUrl(copyRightImageSrc(data));
       const qrImage = usePreviewImages
         ? (state.qrData || state.qrSourceData || DEFAULT_QR_IMAGE_SRC)
-        : assetUrl(DEFAULT_QR_IMAGE_SRC);
+        : assetUrl(copyQrImageSrc(data));
       const qr = `<img src="${qrImage}" alt="${escapeHtml(data.qrLabel)}" width="34" style="display:block;width:34px;height:34px;object-fit:contain;border:0;margin:0 auto 1px;">`;
       const isEnglish = data.signatureLang === "en";
       const titleFontSize = isEnglish ? 14 : 16;
