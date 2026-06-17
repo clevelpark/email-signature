@@ -704,6 +704,8 @@
     const DEFAULT_INFO_LOGO_SRC = "info-logo.png";
     const DEFAULT_RIGHT_IMAGE_SRC = "right-default.png";
     const WHITE_RIGHT_IMAGE_SRC = "right-white.png";
+    const EN_RIGHT_IMAGE_SRC = "right-en-default.png";
+    const EN_WHITE_RIGHT_IMAGE_SRC = "right-en-white.png";
     const DEFAULT_QR_IMAGE_SRC = "qr-default.png";
     const QR_ASSET_COLORS = new Set([
       "#FFFFFF",
@@ -1186,7 +1188,9 @@
     }
 
     function copyRightImageSrc(data) {
-      return normalizeHex(data.rightTextColor) === "#FFFFFF" ? WHITE_RIGHT_IMAGE_SRC : DEFAULT_RIGHT_IMAGE_SRC;
+      const isWhite = normalizeHex(data.rightTextColor) === "#FFFFFF";
+      if (data.signatureLang === "en") return isWhite ? EN_WHITE_RIGHT_IMAGE_SRC : EN_RIGHT_IMAGE_SRC;
+      return isWhite ? WHITE_RIGHT_IMAGE_SRC : DEFAULT_RIGHT_IMAGE_SRC;
     }
 
     function copyQrImageSrc(data) {
